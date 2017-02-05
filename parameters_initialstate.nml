@@ -1,0 +1,40 @@
+ &vegn_parameters_nml
+
+K_nitrogen = 2.5 ! soil mineral nitrogen loss rate (per year)
+
+! species      0         1         2         3         4
+phenotype     = 0,       0,        0,        0,        1,    ! 0: Deciduous; 1 Evergreen
+laimax        = 3.0,     3.0,      3.0,      0.1,      0.1,
+LMA           = 0.035,   0.035,    0.035,    0.035,    0.175,
+LAI_light     = 3.0,     3.0,      4.5,      3.5,      3.0,
+CNleafsupport = 40.,     40.,      40.,      40.,      40.,
+gamma_LN      = 25.,     25.,      25.,      50.5,     50.5,
+gamma_FR      = 2.5,     2.5,      2.5,      1.5,      1.5,
+gamma_SW      = 0.0025,  0.0025,   0.0012,   0.0012,   0.0012
+phiRL         = 0.8,     0.8,      0.8,      0.8,      0.8,
+phiCSA        = 1.25E-4, 1.25E-4,  1.25E-4,  0.25E-4,  0.25E-4,
+mortrate_d_c  = 0.02,    0.02,     0.02,     0.02,     0.02,
+mortrate_d_u  = 0.05,    0.05,     0.05,     0.05,     0.05,
+ /
+
+ &initial_state_nml
+ !   plant
+ init_n_cohorts      = 2,               !  5
+ init_cohort_species = 3,     4,    ! 3,    4,
+ init_cohort_nindivs = 0.05,  0.05,  ! 0.005,0.007,
+ init_cohort_bsw     = 0.2,   0.2,  ! 1.5,
+ init_cohort_bHW     = 0.0,   0.0,  ! 0.0,
+ init_cohort_nsc     = 0.5,   0.5,  ! 2.0,
+
+!  Soil
+ init_fast_soil_C    = 0.1 ! 0.8  ! kg C m-2
+ init_slow_soil_C    = 0.1 ! 40.0 ! kg C m-2
+ init_Nmineral       = 0.5E-3, ! kg N m-2
+ N_input             = 3.6E-3, ! kg N m-2 yr-1, N deposit: 0.8 g N m-2 yr-1
+                               ! high N input --> Deciduous
+                               ! low  N input --> Evergreen
+
+! Model run
+
+ model_run_years     = 500
+ /
