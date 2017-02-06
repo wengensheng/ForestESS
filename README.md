@@ -1,6 +1,6 @@
 Fore Ecological strategy simulator (ForestESS)
 
-These codes are extracted from the version of LM3-PPA used to simulate the forest successional dynamics in the paper of Weng, E., Farrior, CE, Dybzinski, R, and Pacala, SW, et al. 2016 Global Change Biology. Only the subroutines related to plant growth, allometry, reproduction, mortality, and population dynamics are included. It can be used as a forest simulator. 
+ForestESS is a forest simulator. It simulates demographic processes, such as, trees' birth, growth, reproduction, and mortality, population dynamics, competition for light and soil resources, and ecosystem biogeochemical processes. The codes are extracted from the version of LM3-PPA used to simulate the forest successional dynamics in the paper of Weng, E., Farrior, CE, Dybzinski, R, and Pacala, SW, et al. 2016 Global Change Biology. Only the subroutines related to plant growth, allometry, reproduction, mortality, population dynamics, and soil biogeochemical processes are included.  
 
 To run this model, you may just type in “./modelrun.x” if you have a gfortran compiler.
 Or, you can type in:
