@@ -66,7 +66,7 @@
 !----- END -----------------------------------------------------------
 !
 
-program BiomeESS
+program ForestESS
    use esdvm_mod
    implicit none
    type(tile_type),  pointer :: vegn
@@ -402,7 +402,4 @@ subroutine read_forcingdata(forcingData,datalines,days_data,yr_data,timestep)
 end subroutine read_forcingdata
 
 !=====================================================
-end program BiomeESS
-
-
-
+end program ForrestESS
