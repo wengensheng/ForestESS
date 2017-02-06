@@ -1,18 +1,10 @@
 ! =============================================================================
-! The subroutines are from LM3PPA, the version used in the paper :
-!
+! These subroutines are from the LM3-PPA model, the version used in the paper:
 ! Weng, E. S., Farrior, C. E., Dybzinski, R., Pacala, S. W., 2016. 
 ! Predicting vegetation type through physiological and environmental 
 ! interactions with leaf traits: evergreen and deciduous forests in 
-! an earth system modeling framework. Global Change Biology, doi: 10.1111/gcb.13542.
-!
-! This simulator can simulate evolutionarily stable strategy (ESS) of LMA
-! and reproduce the forest succession patterns. But, since it
-! does not include the models of photosynthesis, leaf stomatal
-! conductance, transpiration, soil water dynamics, and energy balance, it 
-! cannot simulate the ESS of allocation as reported in Weng et al. 2015 
-! Biogeosciences.
-! =============================================================================
+! an earth system modeling framework. Global Change Biology, 
+! doi: 10.1111/gcb.13542.
 ! =============================================================================
 
 module esdvm_mod
