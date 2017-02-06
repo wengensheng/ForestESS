@@ -60,22 +60,38 @@ Soil C-N dynamics
 ! ! Daily time step:
 
 !        call vegn_phenology(vegn,j)
+
 !        call vegn_C_N_budget(vegn, tsoil, soil_theta)
+
 !        call vegn_starvation(vegn)
+
 !        call vegn_growth_EW(vegn)
-!
+
 ! ! Yearly time step:
+
 !            call vegn_reproduction(vegn)
+
 !            call vegn_nat_mortality(vegn, real(seconds_per_year))
+
 !            call vegn_starvation(vegn)
+
 !            ! Re-organize cohorts
+
 !            call relayer_cohorts(vegn)
+
 !            call vegn_mergecohorts(vegn)
+
 !            call kill_lowdensity_cohorts(vegn)
+
 !            ! update LAImax for each PFT according to available N
+
 !            call vegn_annualLAImax_update(vegn)
+
 !            ! set annual variables zero
+
 !            call vegn_annual_diagnostics_zero(vegn)
+
 !----- END -----------------------------------------------------------
+
 
 
