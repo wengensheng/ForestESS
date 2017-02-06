@@ -24,8 +24,15 @@
 !                      (02/03/2017)
 !
 !------------------------------------------------------------------------
-! This simulator uses the subroutines from esdvm.F90.
-! Included in this simulator are:
+!
+! This simulator can simulate evolutionarily stable strategy (ESS) of LMA
+! and reproduce the forest succession patterns. But, since it
+! does not include the models of photosynthesis, leaf stomatal
+! conductance, transpiration, soil water dynamics, and energy balance, it 
+! cannot simulate the ESS of allocation as reported in Weng et al. 2015 
+! Biogeosciences.
+!
+! Processes included in this simulator are:
 !     Phenology
 !     Individual-level carbon budget (gain and respiration)
 !     Plant growth: Allometry and allocation
