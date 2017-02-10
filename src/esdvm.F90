@@ -1,5 +1,5 @@
 ! =============================================================================
-! These subroutines are from the LM3-PPA model, the version used in the paper:
+! These subroutines are from the version of LM3-PPA that was used in the paper:
 ! Weng, E. S., Farrior, C. E., Dybzinski, R., Pacala, S. W., 2016. 
 ! Predicting vegetation type through physiological and environmental 
 ! interactions with leaf traits: evergreen and deciduous forests in 
