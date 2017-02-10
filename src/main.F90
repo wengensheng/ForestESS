@@ -208,12 +208,12 @@ program ForestESS
         do i = 1, vegn%n_cohorts
             cc => vegn%cohorts(i)
             ! cohorts
-            !write(102,'(5(I5,","),1(F8.1,","),6(F8.3,","),2(F8.2,","),25(F8.2,","))')  &
-            !    iyears,idoy,cc%ccID,cc%species,cc%layer,   &
-            !    cc%nindivs*10000, cc%layerfrac, cc%LAI, &
-            !    cc%NSC, cc%seedC, cc%bl, cc%br, cc%bsw, cc%bHW, &
-            !    cc%NSN*1000, cc%seedN*1000, cc%leafN*1000, &
-            !    cc%rootN*1000,cc%sapwdN*1000,cc%woodN*1000
+            write(102,'(5(I5,","),1(F8.1,","),6(F8.3,","),2(F8.2,","),25(F8.2,","))')  &
+                iyears,idoy,cc%ccID,cc%species,cc%layer,   &
+                cc%nindivs*10000, cc%layerfrac, cc%LAI, &
+                cc%NSC, cc%seedC, cc%bl, cc%br, cc%bsw, cc%bHW, &
+                cc%NSN*1000, cc%seedN*1000, cc%leafN*1000, &
+                cc%rootN*1000,cc%sapwdN*1000,cc%woodN*1000
         enddo
         ! Tile level, daily
         write(103,'(2(I5,","),15(F8.4,","))') iyears, idoy,  &
