@@ -1,5 +1,5 @@
 !========================================================================
-!==== Fore Ecological strategy simulator (ForestESS) ====================
+!==== Forest Ecological Strategy Simulator (ForestESS) ==================
 !============   Main program   ==========================================
 !=============== 12-25-2016 =============================================
 !========================================================================
@@ -20,14 +20,14 @@
 ! competition. Biogeosciences, 12: 2655–2694, doi:10.5194/bg-12-2655-2015.
 !
 !
-! Contact Ensheng Weng (wengensheng@gmail.com) for qeustions.
+! Please contact Ensheng Weng (wengensheng@gmail.com) for any qeustions.
 !                      (02/03/2017)
 !
 !------------------------------------------------------------------------
 !
 ! This simulator can simulate evolutionarily stable strategy (ESS) of LMA
-! and reproduce the forest succession patterns. But, since it
-! does not include the models of photosynthesis, leaf stomatal
+! and reproduce the forest succession patterns in Weng et al. 2016. But, since 
+! it does not have the models of photosynthesis, leaf stomatal
 ! conductance, transpiration, soil water dynamics, and energy balance, it 
 ! cannot simulate the ESS of allocation as reported in Weng et al. 2015 
 ! Biogeosciences.
