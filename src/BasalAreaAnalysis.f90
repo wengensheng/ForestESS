@@ -38,61 +38,10 @@
 ! fileout1=trim(field(1))//'_mean.csv'
  fileout2=trim(field(1))//'_basalarea.csv'
 
-! open(13,file=fileout1)
  open(14,file=fileout2)
  write(14,'(360(a12,","))') 'year','Batot','Deciduous','Evergreen'
 
-! write(13,'(360(a12,","))') 'FirstLayer','CriticalHeight','CAabv5m','Density', &
-!       'layer1BM','MortBM','totalBM','Batot', &
-!	   'BA_aspen','BA_sugarmaple','BA_redmaple',  &
-!	   'DBH1','DBH2','DBH3','DBH4','DBH5','DBH6',                  &
-!	   'DBH7','DBH8','DBH9','DBH10','DBH11','DBH12',               &
-!	   'DBH13','DBH14','DBH15','DBH16','DBH17','DBH18',            &
-!	   'DBH19','DBH20','DBH21',                                          &
-!	   'BM1','BM2','BM3','BM4','BM5','BM6',                  &
-!	   'BM7','BM8','BM9','BM10','BM11','BM12',               &
-!	   'BM13','BM14','BM15','BM16','BM17','BM18',            &
-!	   'BM19','BM20','BM21',                                          &
-!!      Layer 1 first cohort
-!	   'Aspen', &
-!       'density','CAI','dbh', 'height','crownarea',        &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP', &
-!	   'Sugarmaple', &
-!       'density','CAI','dbh', 'height','crownarea',    &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP', &
-!	   'Redmaple', &
-!       'density','CAI','dbh', 'height','crownarea',    &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP', &
-!!      Layer 2 first cohort
-!	   'Aspen', &
-!       'density','CAI','dbh', 'height','crownarea',        &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP', &
-!	   'Sugarmaple', &
-!       'density','CAI','dbh', 'height','crownarea',    &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP', &
-!	   'Redmaple', &
-!       'density','CAI','dbh', 'height','crownarea',    &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP', &
-!!      Layer mean
-!	   'layer','Aspen',  &
-!       'density','CAI','dbh', 'height','crownarea',    &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP',&
-!	   'layer','Sugarmaple',  &
-!       'density','CAI','dbh', 'height','crownarea',    &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP',&
-!	   'layer','redmaple',  &
-!       'density','CAI','dbh', 'height','crownarea',    &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP',&
-!	   'layer','Aspen',  &
-!       'density','CAI','dbh', 'height','crownarea',    &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP',&
-!	   'layer','Sugarmaple',  &
-!       'density','CAI','dbh', 'height','crownarea',    &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP',&
-!	   'layer','Redmaple',  &
-!       'density','CAI','dbh', 'height','crownarea',    &
-!       'bsw','bwood', 'nsc', 'dDBH', 'NPPL','NPPR','NPPW','NPPRP'
-
+! file names
  do i=1,no_file
      filein(i)=trim(filepath)//trim(field(i))//'.txt'  !trim(filepath)//trim(field(i))
  enddo
@@ -200,26 +149,11 @@ BMclasses = 0.0
            write(*,*)" open failed !"
      endif
 
-! output to files
-
-! do m = 1, totyears
-!
-!    write(13,103)m,HTstar(m),CAabv5m(m),Layer1Den(m),                  &
-!                   Layer1BM(m),BMmort(m),totalBM(m),          &
-!	               basalA(m), (BApft(i,m),i=1,maxPFTs),                &
-!                   (DBHclasses(i,m),i=1,bins),                         &
-!                   (BMclasses(i,m),i=1,bins),                          &
-!                   (iPFT,(firstCC(i,iPFT,m),                           &
-!	               i=1,planttraits),iPFT=1,maxPFTs),                   &
-!
-!                   (iPFT,(L2firstCC(i,iPFT,m),                         &
-!	               i=1,planttraits),iPFT=1,maxPFTs)
-! enddo
-
 140 format(1(I8,','),10(f15.4,','),42(f15.4,','), 6(I8,',',13(f15.4,',')), 18(2(I8,','),13(f15.4,',')) )
 103 format(1(I8,','),11(f15.4,','),42(f15.4,','), 6(I8,',',13(f15.4,',')), 18(2(I8,','),13(f15.4,',')) )
 102 format(1(I8,','),4(f15.4,','),6(f15.4,','), 2(I8,',',10(f15.4,',')), 12(2(I8,','),10(f15.4,',')) )
 101 format(1(I8,','),4(f15.4,','),6(f15.4,','), 1(I8,',',10(f15.4,',')),  6(2(I8,','),10(f15.4,',')) )
-close (12)
-close (13)
+
+close (211)
+close (14)
 end
