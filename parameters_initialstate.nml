@@ -1,4 +1,4 @@
- &vegn_parameters_nml
+&vegn_parameters_nml
 
 K_nitrogen = 2.5 ! soil mineral nitrogen loss rate (per year)
 
@@ -18,10 +18,10 @@ mortrate_d_u  = 0.05,    0.05,     0.05,     0.05,     0.05,    ! understory tre
  /
 
  &initial_state_nml
- !   plant
- init_n_cohorts      = 2,               !  5,  
+ ! Initial plant cohorts
+ init_n_cohorts      = 2,           !  5,  
  init_cohort_species = 3,     4,    ! 3,    4,
- init_cohort_nindivs = 0.05,  0.05,  !  trees/ha
+ init_cohort_nindivs = 0.05,  0.05, !  trees/ha
  init_cohort_bsw     = 0.2,   0.2,  ! 1.5, ! sapwood biomass, kgC tree-1
  init_cohort_bHW     = 0.0,   0.0,  ! 0.0, ! heartwood biomass, kgC tree-1
  init_cohort_nsc     = 0.5,   0.5,  ! 2.0, ! non-structural carbon, kgC tree-1
