@@ -149,8 +149,8 @@ program ForestESS
    call initialize_vegn_tile(vegn,nCohorts,namelistfile)
 
    ! Read in forcing data
-   !call read_forcingdata(forcingData,datalines,days_data,yr_data,timestep)
-   call read_NACPforcing(forcingData,datalines,days_data,yr_data,timestep)
+   call read_forcingdata(forcingData,datalines,days_data,yr_data,timestep)
+   !call read_NACPforcing(forcingData,datalines,days_data,yr_data,timestep)
    steps_per_day = int(24.0/timestep)
 
    ! total years of model run
