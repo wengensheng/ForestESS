@@ -4,15 +4,16 @@ K_nitrogen = 2.5 ! soil mineral nitrogen loss rate (per year)
 
 ! species      0         1         2         3         4
 phenotype     = 0,       0,        0,        0,        1,    ! 0: Deciduous; 1 Evergreen
-laimax        = 3.0,     3.0,      3.0,      0.1,      0.1,  ! Initial crown LAI
+laimax        = 3.0,     3.0,      0.1,      0.1,      0.1,  ! Initial crown LAI
 LMA           = 0.035,   0.035,    0.035,    0.035,    0.175,! kgC m-2 leaf
-LAI_light     = 3.0,     3.0,      4.5,      3.5,      3.0,  ! Light-limited maximum crown LAI
+LAI_light     = 3.0,     3.0,      3.5,      3.5,      3.0,  ! Light-limited maximum crown LAI
 CNleafsupport = 40.,     40.,      40.,      40.,      40.,  ! C/N ratio of the protective tissues of leaves
-gamma_LN      = 25.,     25.,      25.,      50.5,     50.5, ! leaf respiration rate (kgC kgN-1 yr-1)
-gamma_FR      = 2.5,     2.5,      2.5,      1.5,      1.5,  ! fine root respiration rate (kgC kgN-1 yr-1)
+Vannual       = 1.2,     1.2,      1.2,      0.8,      0.8,   ! 1.2 kgC m-2 yr-1
+gamma_LN      = 25.,     25.,      50.5,     50.5,     50.5, ! leaf respiration rate (kgC kgN-1 yr-1)
+gamma_FR      = 2.5,     2.5,      1.5,      1.5,      1.5,  ! fine root respiration rate (kgC kgN-1 yr-1)
 gamma_SW      = 0.0025,  0.0025,   0.0012,   0.0012,   0.0012, ! Sapwood respiration rate (kgC m-2 Acambium yr-1)
 phiRL         = 0.8,     0.8,      0.8,      0.8,      0.8,    ! ratio of fine root surface area toleaf area
-phiCSA        = 1.25E-4, 1.25E-4,  1.25E-4,  0.25E-4,  0.25E-4, ! ratio of sapwood cross section area to leaf area
+phiCSA        = 1.25E-4, 1.25E-4,  0.25E-4,  0.25E-4,  0.25E-4, ! ratio of sapwood cross section area to leaf area
 mortrate_d_c  = 0.02,    0.02,     0.02,     0.02,     0.02,    ! canopy tree mortality rate, year-1
 mortrate_d_u  = 0.05,    0.05,     0.05,     0.05,     0.05,    ! understory tree mortality rate, year-1
  /
@@ -20,7 +21,7 @@ mortrate_d_u  = 0.05,    0.05,     0.05,     0.05,     0.05,    ! understory tre
  &initial_state_nml
  ! Initial plant cohorts
  init_n_cohorts      = 2,           !  5,  
- init_cohort_species = 3,     4,    ! 3,    4,
+ init_cohort_species = 4,     3,    ! 3,    4,
  init_cohort_nindivs = 0.05,  0.05, !  trees/ha
  init_cohort_bsw     = 0.2,   0.2,  ! 1.5, ! sapwood biomass, kgC tree-1
  init_cohort_bHW     = 0.0,   0.0,  ! 0.0, ! heartwood biomass, kgC tree-1
