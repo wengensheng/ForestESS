@@ -21,10 +21,10 @@
 !
 !
 ! Contact Ensheng Weng (wengensheng@gmail.com) for qeustions.
-!                      (02/03/2017)
+!
+!  (Updated on 05/16/2020)
 !
 !------------------------------------------------------------------------
-!
 ! This simulator can simulate evolutionarily stable strategy (ESS) of LMA
 ! and reproduce the forest succession patterns. But, since it
 ! does not include the models of photosynthesis, leaf stomatal
@@ -40,7 +40,6 @@
 !     Mortality
 !     Population dynamics
 !     Soil C-N dynamics
-!
 !
 !----------------------------------------
 ! Subroutine call structure:
@@ -71,7 +70,9 @@
 !            ! set annual variables zero
 !            call vegn_annual_diagnostics_zero(vegn)
 !----- END -----------------------------------------------------------
-!
+
+! for Vegetation-Remotesensing data assimilation
+#define DATA_ASSIMILATION
 
 program ForestESS
    use esdvm
@@ -94,7 +95,7 @@ program ForestESS
    real    :: plantC,plantN, soilC, soilN
    character(len=50) :: plantcohorts,plantCNpools,soilCNpools,allpools       ! output file names
    logical :: new_annual_cycle = .False.
-   logical :: switch = .True.
+   logical :: switch = .True. ! for invasion by another PFT
    integer :: istat1,istat2,istat3
    integer :: year0, year1, iyears
    integer :: totyears, totdays
@@ -106,7 +107,7 @@ program ForestESS
    ! create output files
    plantcohorts = trim(filepath_out)//'Annual_cohorts.csv'
    plantCNpools = trim(filepath_out)//'Plant_C_N_pools.csv'  ! daily
-   soilCNpools  = trim(filepath_out)//'Soil_C_N_pools.csv'
+   soilCNpools  = trim(filepath_out)//'Soil_C_N_pools.csv'   ! daily
    allpools     = trim(filepath_out)//'EcosystemDynamics.csv'
 
    open(101,file=trim(plantcohorts), ACTION='write', IOSTAT=istat1)
@@ -114,24 +115,25 @@ program ForestESS
    open(103,file=trim(soilCNpools),  ACTION='write', IOSTAT=istat3)
    open(104,file=trim(allpools),     ACTION='write', IOSTAT=istat3)
    ! head
-   write(101,'(3(a5,","),25(a9,","))')             &
-        'cID','PFT','layer','density', 'f_layer',  &
-        'dDBH','dbh','height','Acrown',            &
-        'wood','nsc', 'NSN','NPPtr','seed',        &
-        'NPPL','NPPR','NPPW','GPP-yr','NPP-yr',    &
-        'N_uptk','N_fix','maxLAI'
-
-   write(102,'(5(a5,","),25(a8,","))')               &
+   if(outputdaily)then
+     write(101,'(5(a5,","),25(a8,","))')               &
         'year','doy','cID','PFT',                    &
         'layer','density', 'f_layer', 'LAI',         &
         'NSC','seedC','leafC','rootC','SW-C','HW-C', &
         'NSN','seedN','leafN','rootN','SW-N','HW-N'
 
-   write(103,'(2(a5,","),25(a8,","))')  'year','doy',         &
+     write(102,'(2(a5,","),25(a8,","))')  'year','doy',         &
         'GPP', 'NPP', 'Rh',   &
         'McrbC', 'fineL', 'struL', 'McrbN', 'fineN', 'struN', &
         'mineralN', 'N_uptk'
-
+   endif
+   ! Yearly output
+   write(103,'(3(a5,","),25(a9,","))')             &
+        'cID','PFT','layer','density', 'f_layer',  &
+        'dDBH','dbh','height','Acrown',            &
+        'wood','nsc', 'NSN','NPPtr','seed',        &
+        'NPPL','NPPR','NPPW','GPP-yr','NPP-yr',    &
+        'N_uptk','N_fix','maxLAI'
    write(104,'(1(a5,","),80(a8,","))')  'year',              &
         'CAI','LAI','GPP', 'NPP',   'Rh',                    &
         'plantC','soilC',    'plantN', 'soilN',              &
@@ -187,7 +189,7 @@ program ForestESS
              simu_steps = simu_steps + 1
 
              ! fast-step calls
-             ! ***** none ******
+             ! ***** not included processes ******
              ! leaf photosynthesis
              ! transpiration
              ! plant respiration
@@ -201,26 +203,27 @@ program ForestESS
         call vegn_phenology(vegn,j)
         call vegn_C_N_budget(vegn, tsoil, soil_theta)
         call vegn_starvation(vegn)
-        call vegn_growth_EW(vegn)
+        call vegn_growth_EW(vegn, tsoil, soil_theta)
 
         !!! daily output
-        !do i = 1, vegn%n_cohorts
-        !    cc => vegn%cohorts(i)
-        !    !! cohorts
-        !    write(102,'(5(I5,","),1(F8.1,","),6(F8.3,","),2(F8.2,","),25(F8.2,","))')  &
-        !        iyears,idoy,cc%ccID,cc%species,cc%layer,   &
-        !        cc%nindivs*10000, cc%layerfrac, cc%LAI, &
-        !        cc%NSC, cc%seedC, cc%bl, cc%br, cc%bsw, cc%bHW, &
-        !        cc%NSN*1000, cc%seedN*1000, cc%leafN*1000, &
-        !        cc%rootN*1000,cc%sapwN*1000,cc%woodN*1000
-        !enddo
-        !!! Tile level, daily
-        !write(103,'(2(I5,","),15(F8.4,","))') iyears, idoy,  &
-        !        vegn%GPP, vegn%NPP, vegn%Rh, &
-        !        vegn%MicrobialC, vegn%metabolicL, vegn%structuralL, &
-        !        vegn%MicrobialN*1000, vegn%metabolicN*1000, vegn%structuralN*1000, &
-        !        vegn%mineralN*1000,   vegn%N_uptake*1000
-
+        if(outputdaily)then
+          do i = 1, vegn%n_cohorts
+            cc => vegn%cohorts(i)
+            !! cohorts
+            write(101,'(5(I5,","),1(F8.1,","),6(F8.3,","),2(F8.2,","),25(F8.2,","))')  &
+                iyears,idoy,cc%ccID,cc%species,cc%layer,   &
+                cc%nindivs*10000, cc%layerfrac, cc%LAI, &
+                cc%NSC, cc%seedC, cc%bl, cc%br, cc%bsw, cc%bHW, &
+                cc%NSN*1000, cc%seedN*1000, cc%leafN*1000, &
+                cc%rootN*1000,cc%sapwN*1000,cc%woodN*1000
+          enddo
+          !! Tile level, daily
+          write(102,'(2(I5,","),15(F8.4,","))') iyears, idoy,  &
+                vegn%GPP, vegn%NPP, vegn%Rh, &
+                vegn%MicrobialC, vegn%metabolicL, vegn%structuralL, &
+                vegn%MicrobialN*1000, vegn%metabolicN*1000, vegn%structuralN*1000, &
+                vegn%mineralN*1000,   vegn%N_uptake*1000
+        endif ! daily output
         ! annual calls
         idata = MOD(simu_steps+1, datalines)+1 !
         year1 = forcingData(idata)%year  ! Check if it is the last day of a year
@@ -230,7 +233,7 @@ program ForestESS
         if(new_annual_cycle)then
             idoy = 0
 
-            write(101,'(2(I6,","),1(F9.2,","))')iyears, vegn%n_cohorts,vegn%annualN*1000
+            write(103,'(2(I6,","),1(F9.2,","))')iyears, vegn%n_cohorts,vegn%annualN*1000
             write(*,  '(2(I6,","),1(F9.2,","))')iyears, vegn%n_cohorts,vegn%annualN*1000
             ! output yearly variables
             write(*,'(3(a5,","),25(a9,","))') &
@@ -250,7 +253,7 @@ program ForestESS
                fwood = cc%NPPwood/NPPtree
 
                dDBH = (cc%DBH   - cc%DBH_ys)*1000.
-               write(101,'(1(I7,","),2(I4,","),1(F9.1,","),25(F9.3,","))')        &
+               write(103,'(1(I7,","),2(I4,","),1(F9.1,","),25(F9.3,","))')        &
                     cc%ccID,cc%species,cc%layer,                        &
                     cc%nindivs*10000, cc%layerfrac,dDBH,                &
                     cc%dbh,cc%height,cc%crownarea,                      &
@@ -271,14 +274,10 @@ program ForestESS
                     cc%N_up_yr*1000,cc%fixedN_yr*1000,                  &
                     spdata(cc%species)%laimax
             enddo
-            ! 'year',                 &
-            !'NSC','SeedC','leafC', 'rootC', 'SW-C',  'HW-C', 'LAI', &
-            !'McrbC', 'fineL', 'struL', 'McrbN', 'fineN', 'struN',   &
-            !'mineralN', 'N_uptake'
 
             ! ---------- annual call -------------
-            ! update the LAImax of each PFT according to available N for next year
-            call vegn_annualLAImax_update(vegn)
+            ! update the LAImax of each PFT according to available N for next year ! HuangXin: comment this if N cycle is turned off
+            if(update_annualLAImax) call vegn_annualLAImax_update(vegn)
 
             ! Reproduction and mortality
             call vegn_reproduction(vegn)
@@ -290,7 +289,7 @@ program ForestESS
             call kill_lowdensity_cohorts(vegn)
             call vegn_mergecohorts(vegn)
 
-            ! tile pools output
+            ! Summarize tile-based variables for output
             do i = 1, vegn%n_cohorts
                cc => vegn%cohorts(i)
                     ! Vegn C pools:
@@ -334,13 +333,9 @@ program ForestESS
             ! set annual variables zero
             call vegn_annual_diagnostics_zero(vegn)
 
-            !! invasion every 200 years (flip cohort 1)
-
-            !if(iyears>600 .and. mod(iyears,100)==0)then
-            !    vegn%cohorts(1)%species = mod(iyears/100,3)+2
-            !endif
-
-            if(iyears>=600 .and. mod(iyears,300)==0 .and. switch)then
+            !! invasion test
+            if(do_migration)then
+              if(iyears>=600 .and. mod(iyears,300)==0 .and. switch)then
                 !call vegn_species_switch(vegn,2,iyears,200)
                 vegn%cohorts(1)%species = 5 - vegn%cohorts(1)%species ! mod(iyears/200,2) + 2
 
@@ -354,6 +349,7 @@ program ForestESS
 
                 !switch = .false.
             endif
+          endif ! do_migration
             ! update the years of model run
             iyears = iyears + 1
         endif

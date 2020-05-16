@@ -420,6 +420,14 @@ real   :: N_input    = 0.0008 ! annual N input to soil N pool, kgN m-2 yr-1
 character(len=80) :: filepath_in = '/Users/eweng/Documents/BiomeESS/forcingData/'
 character(len=160) :: climfile = 'US-WCrforcing.txt'
 integer:: model_run_years = 100
+integer   :: equi_days       = 0 ! 100 * 365
+logical   :: outputhourly = .False.
+logical   :: outputdaily  = .False.
+logical   :: do_U_shaped_mortality = .False.
+logical   :: update_annualLAImax = .False.
+logical   :: do_migration = .False.
+logical   :: do_fire = .False.
+logical   :: do_closedN_run = .True. !.False.
 
 namelist /initial_state_nml/ &
     init_n_cohorts, init_cohort_species, init_cohort_nindivs, &
@@ -427,7 +435,11 @@ namelist /initial_state_nml/ &
     init_cohort_bHW, init_cohort_seedC, init_cohort_nsc, &
     init_fast_soil_C, init_slow_soil_C,    &
     init_Nmineral, N_input, &
-    filepath_in,climfile, model_run_years
+    filepath_in,climfile, model_run_years, &
+    outputhourly, outputdaily, equi_days, &
+    do_U_shaped_mortality,update_annualLAImax, &
+    do_fire, do_migration, &
+    do_closedN_run
 !---------------------------------
 
  contains
@@ -455,70 +467,25 @@ subroutine vegn_C_N_budget(vegn, tsoil, theta)
   real :: R_days,fNSC,fLFR,fStem
 
   ! Carbon gain trhough photosynthesis
-  call vegen_C_gain(vegn,forcingData)
+  call vegn_C_gain(vegn,forcingData)
 
-  ! update plant carbon and nitrogen for all cohorts
-  vegn%gpp = 0.
-  vegn%npp = 0.
-  vegn%Resp = 0.
-  ! Respiration and allocation for growth
-  do i = 1, vegn%n_cohorts
-     cc => vegn%cohorts(i)
-     associate ( sp => spdata(cc%species) )
-     ! increment tha cohort age
-     cc%age = cc%age + dt_fast_yr
+  ! Nitrogen uptake
+  call vegn_N_uptake(vegn, tsoil, theta)
 
-     ! GPP has been obtained from a photosynthesis model (cc%gpp, kgC tree-1 time step-1)
-
-     ! Maintenance respiration
-     call plant_respiration(cc,tsoil) ! get resp per tree per time step
-     cc%nsc = cc%nsc + cc%gpp - cc%resp
-     cc%NSN = cc%NSN + cc%fixedN
-  ! cc%NSC     = cc%NSC - r_Nfix
-
-     ! Carbon gain
-     call carbon_for_growth(cc)  ! put carbon into carbon_gain for growth
-
-     cc%resp = cc%resp + cc%resg ! put growth respiration into total resp.
-     cc%npp  = cc%gpp - cc%resp ! kgC tree-1 time step-1
-
-!    Weng 2015-09-18
-     cc%annualGPP  = cc%annualGPP  + cc%gpp/cc%crownarea ! * dt_fast_yr
-     cc%annualNPP  = cc%annualNPP  + cc%npp/cc%crownarea ! * dt_fast_yr
-     cc%annualResp = cc%annualResp + cc%resp/cc%crownarea ! * dt_fast_yr
-     cc%fixedN_yr  = cc%fixedN_yr  + cc%fixedN/cc%crownarea
-     ! accumulate tile-level GPP and NPP
-     vegn%gpp = vegn%gpp + cc%gpp * cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
-     vegn%npp = vegn%npp + cc%npp * cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
-     vegn%resp= vegn%resp+ cc%resp* cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
-
-
-     END ASSOCIATE
-  enddo
-  cc => null()
-  call vegn_leaf_fine_root_turnover(vegn, tsoil, theta)
   ! update soil carbon
   call SOMdecomposition(vegn, tsoil, theta)
-  ! NEP is equal to NNP minus soil respiration
-  vegn%nep = vegn%npp - vegn%rh ! kgC m-2 yr-1, though time step is daily
-  ! Annual summary:
-  vegn%annualGPP  = vegn%annualGPP  + vegn%gpp * dt_fast_yr
-  vegn%annualNPP  = vegn%annualNPP  + vegn%npp * dt_fast_yr
-  vegn%annualResp = vegn%annualResp + vegn%resp * dt_fast_yr
-  vegn%annualRh   = vegn%annualRh   + vegn%rh   * dt_fast_yr ! annual Rh
-!! Nitrogen uptake
-   call vegn_N_uptake(vegn, tsoil, theta)
 
-  vegn%age = vegn%age + dt_fast_yr
 
 end subroutine vegn_C_N_budget
-! ============================================================================
 
-subroutine vegn_growth_EW(vegn)
+! ============================================================================
+subroutine vegn_growth_EW(vegn, tsoil, theta)
 ! updates cohort biomass pools, LAI, and height using accumulated
 ! carbon_gain and bHW_gain
   type(tile_type), intent(inout) :: vegn
-
+  real, intent(in) :: tsoil ! average temperature of soil, deg K
+  real, intent(in) :: theta ! average soil wetness, unitless
+  
   ! ---- local vars
   type(cohort_type), pointer :: cc    ! current cohort
   real :: CSAtot ! total cross section area, m2
@@ -542,6 +509,45 @@ subroutine vegn_growth_EW(vegn)
   real :: N_supply, N_demand,fNr,Nsupplyratio,extrasapwN
   integer :: i
 
+  ! Available carbon and nitrogen for growth, and calculate fluxes
+  vegn%gpp = 0.
+  vegn%npp = 0.
+  vegn%Resp = 0.
+  ! Respiration and allocation for growth
+  do i = 1, vegn%n_cohorts
+     cc => vegn%cohorts(i)
+     associate ( sp => spdata(cc%species) )
+     ! Maintenance respiration
+     call plant_respiration(cc,tsoil) ! get resp per tree per time step
+
+     ! Fetch carbon for growth
+     call carbon_for_growth(cc)  ! put carbon into carbon_gain for growth
+
+     cc%resp = cc%resp + cc%resg ! put growth respiration into total resp.
+     cc%npp  = cc%gpp - cc%resp ! kgC tree-1 time step-1
+
+!    Weng 2015-09-18
+     cc%annualGPP  = cc%annualGPP  + cc%gpp/cc%crownarea ! * dt_fast_yr
+     cc%annualNPP  = cc%annualNPP  + cc%npp/cc%crownarea ! * dt_fast_yr
+     cc%annualResp = cc%annualResp + cc%resp/cc%crownarea ! * dt_fast_yr
+     cc%fixedN_yr  = cc%fixedN_yr  + cc%fixedN/cc%crownarea
+     ! accumulate tile-level GPP and NPP
+     vegn%gpp = vegn%gpp + cc%gpp * cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
+     vegn%npp = vegn%npp + cc%npp * cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
+     vegn%resp= vegn%resp+ cc%resp* cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
+
+     END ASSOCIATE
+  enddo
+  cc => null()
+  ! NEP is equal to NNP minus soil respiration
+  vegn%nep = vegn%npp - vegn%rh ! kgC m-2 yr-1, though time step is daily
+  ! Annual summary:
+  vegn%annualGPP  = vegn%annualGPP  + vegn%gpp * dt_fast_yr
+  vegn%annualNPP  = vegn%annualNPP  + vegn%npp * dt_fast_yr
+  vegn%annualResp = vegn%annualResp + vegn%resp * dt_fast_yr
+  vegn%annualRh   = vegn%annualRh   + vegn%rh   * dt_fast_yr ! annual Rh
+
+  ! Growth/Allocation
   DBHtp = 0.8
   fNr   = 0.25
   do i = 1, vegn%n_cohorts
@@ -656,9 +662,19 @@ subroutine vegn_growth_EW(vegn)
      endif ! "cc%status == LEAF_ON"
      ! reset carbon acculmulation terms
      cc%carbon_gain = 0
-  end associate ! F2003
+    end associate ! F2003
   enddo
   cc => null()
+
+  ! Leaf and fine root turnover
+  call vegn_leaf_fine_root_turnover(vegn, tsoil, theta)
+  ! update tile and cohort ages
+  do i = 1, vegn%n_cohorts
+     cc => vegn%cohorts(i)
+     cc%age = cc%age + dt_fast_yr
+  enddo
+  vegn%age = vegn%age + dt_fast_yr
+
 end subroutine vegn_growth_EW ! daily
 
 !============================================================================
@@ -1171,7 +1187,7 @@ end subroutine relayer_cohorts
 ! ============= Plant physiology =============================================
 
 ! ============================================================================
-subroutine vegen_C_gain(vegn,forcing)
+subroutine vegn_C_gain(vegn,forcing)
 !@ Calculate daily carbon gain per tree based on V and self-shading of leaves
 !@ It is used to generate daily GPP (photosynthesis)
 !@ This subroutine can be replaced by a photosynthesis model working at hourly
@@ -1212,9 +1228,7 @@ subroutine vegen_C_gain(vegn,forcing)
       f_light(i) = f_light(i-1) * &
                   (exp(-0.5*vegn%LAIlayer(i))*(1.-f_gap) + f_gap)
   enddo
-  !do i =1, layer !MIN(int(vegn%CAI+1.0),9)
-  !    write(*,*)'f_light',layer,i,vegn%LAIlayer(i),f_light(i)
-  !enddo
+
 ! Assumption: no gaps  --> GPP of understory trees is too low!
 ! Assimilation of carbon for each cohort considering their light envrionment
   do i = 1, vegn%n_cohorts
@@ -1236,10 +1250,12 @@ subroutine vegen_C_gain(vegn,forcing)
      else
          cc%gpp = 0.0
      endif
+     ! Update NSC
+     cc%nsc = cc%nsc + cc%gpp
   enddo
 
   cc => null()
-end subroutine vegen_C_gain
+end subroutine vegn_C_gain
 !=========================================================================
 
 subroutine carbon_for_growth(cc)
@@ -1321,6 +1337,9 @@ subroutine plant_respiration(cc, tsoil)
   cc%resp = (r_leaf + r_stem + r_root + r_Nfix) !* max(0.0, cc%nsc/NSCtarget)
   cc%resl = r_leaf !* max(0.0, cc%nsc/NSCtarget)
   cc%resr = r_root + r_Nfix !* max(0.0, cc%nsc/NSCtarget)
+  ! Update NSC
+  cc%nsc = cc%nsc - cc%resp
+  cc%NSN = cc%NSN + cc%fixedN
 
 end subroutine plant_respiration
 
