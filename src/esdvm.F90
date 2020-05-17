@@ -469,12 +469,41 @@ subroutine vegn_C_N_budget(vegn, tsoil, theta)
   ! Carbon gain trhough photosynthesis
   call vegn_C_gain(vegn,forcingData)
 
-  ! Nitrogen uptake
-  call vegn_N_uptake(vegn, tsoil, theta)
-
   ! update soil carbon
   call SOMdecomposition(vegn, tsoil, theta)
 
+  ! Nitrogen uptake
+  call vegn_N_uptake(vegn, tsoil, theta)
+
+! Respiration and fluxes
+  vegn%gpp = 0.
+  vegn%npp = 0.
+  vegn%Resp = 0.
+  do i = 1, vegn%n_cohorts
+     cc => vegn%cohorts(i)
+     ! Maintenance respiration
+     call plant_respiration(cc,tsoil) ! get resp per tree per time step
+
+!    Weng 2015-09-18
+     cc%resp = cc%resp + cc%resg ! put growth respiration into total resp.
+     cc%npp  = cc%gpp - cc%resp ! kgC tree-1 time step-1
+
+     cc%annualGPP  = cc%annualGPP  + cc%gpp/cc%crownarea ! * dt_fast_yr
+     cc%annualNPP  = cc%annualNPP  + cc%npp/cc%crownarea ! * dt_fast_yr
+     cc%annualResp = cc%annualResp + cc%resp/cc%crownarea ! * dt_fast_yr
+     cc%fixedN_yr  = cc%fixedN_yr  + cc%fixedN/cc%crownarea
+     ! accumulate tile-level GPP and NPP
+     vegn%gpp = vegn%gpp + cc%gpp * cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
+     vegn%npp = vegn%npp + cc%npp * cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
+     vegn%resp= vegn%resp+ cc%resp* cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
+  enddo
+  ! NEP is equal to NPP minus soil respiration
+  vegn%nep = vegn%npp - vegn%rh ! kgC m-2 yr-1, though time step is daily
+  ! Annual summary:
+  vegn%annualGPP  = vegn%annualGPP  + vegn%gpp * dt_fast_yr
+  vegn%annualNPP  = vegn%annualNPP  + vegn%npp * dt_fast_yr
+  vegn%annualResp = vegn%annualResp + vegn%resp * dt_fast_yr
+  vegn%annualRh   = vegn%annualRh   + vegn%rh   * dt_fast_yr ! annual Rh
 
 end subroutine vegn_C_N_budget
 
@@ -485,7 +514,7 @@ subroutine vegn_growth_EW(vegn, tsoil, theta)
   type(tile_type), intent(inout) :: vegn
   real, intent(in) :: tsoil ! average temperature of soil, deg K
   real, intent(in) :: theta ! average soil wetness, unitless
-  
+
   ! ---- local vars
   type(cohort_type), pointer :: cc    ! current cohort
   real :: CSAtot ! total cross section area, m2
@@ -509,43 +538,16 @@ subroutine vegn_growth_EW(vegn, tsoil, theta)
   real :: N_supply, N_demand,fNr,Nsupplyratio,extrasapwN
   integer :: i
 
-  ! Available carbon and nitrogen for growth, and calculate fluxes
-  vegn%gpp = 0.
-  vegn%npp = 0.
-  vegn%Resp = 0.
-  ! Respiration and allocation for growth
+  ! Available carbon and nitrogen for growth
   do i = 1, vegn%n_cohorts
      cc => vegn%cohorts(i)
      associate ( sp => spdata(cc%species) )
-     ! Maintenance respiration
-     call plant_respiration(cc,tsoil) ! get resp per tree per time step
-
      ! Fetch carbon for growth
      call carbon_for_growth(cc)  ! put carbon into carbon_gain for growth
-
-     cc%resp = cc%resp + cc%resg ! put growth respiration into total resp.
-     cc%npp  = cc%gpp - cc%resp ! kgC tree-1 time step-1
-
-!    Weng 2015-09-18
-     cc%annualGPP  = cc%annualGPP  + cc%gpp/cc%crownarea ! * dt_fast_yr
-     cc%annualNPP  = cc%annualNPP  + cc%npp/cc%crownarea ! * dt_fast_yr
-     cc%annualResp = cc%annualResp + cc%resp/cc%crownarea ! * dt_fast_yr
-     cc%fixedN_yr  = cc%fixedN_yr  + cc%fixedN/cc%crownarea
-     ! accumulate tile-level GPP and NPP
-     vegn%gpp = vegn%gpp + cc%gpp * cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
-     vegn%npp = vegn%npp + cc%npp * cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
-     vegn%resp= vegn%resp+ cc%resp* cc%nindivs /dt_fast_yr ! kgC m-2 yr-1
 
      END ASSOCIATE
   enddo
   cc => null()
-  ! NEP is equal to NNP minus soil respiration
-  vegn%nep = vegn%npp - vegn%rh ! kgC m-2 yr-1, though time step is daily
-  ! Annual summary:
-  vegn%annualGPP  = vegn%annualGPP  + vegn%gpp * dt_fast_yr
-  vegn%annualNPP  = vegn%annualNPP  + vegn%npp * dt_fast_yr
-  vegn%annualResp = vegn%annualResp + vegn%resp * dt_fast_yr
-  vegn%annualRh   = vegn%annualRh   + vegn%rh   * dt_fast_yr ! annual Rh
 
   ! Growth/Allocation
   DBHtp = 0.8
@@ -742,7 +744,6 @@ subroutine vegn_phenology(vegn,doy) ! daily step
         cc%gdd   = 0.0        ! Start to counting a new cycle of GDD
         vegn%gdd = 0.0
      endif
-
 
 !    End a growing season: leaves fall for deciduous
      if(cc%status == LEAF_OFF .AND. cc%bl > 0.0)then

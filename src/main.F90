@@ -103,30 +103,31 @@ program ForestESS
    integer :: simu_steps,idata
    character(len=50) filepath_out
 
+   ! Parameter initialization: Initialize PFT parameters
+   call initialize_PFT_data(namelistfile)
+
+   ! Output
    filepath_out='output/'
-   ! create output files
-   plantcohorts = trim(filepath_out)//'Annual_cohorts.csv'
    plantCNpools = trim(filepath_out)//'Plant_C_N_pools.csv'  ! daily
    soilCNpools  = trim(filepath_out)//'Soil_C_N_pools.csv'   ! daily
+   plantcohorts = trim(filepath_out)//'Annual_cohorts.csv'
    allpools     = trim(filepath_out)//'EcosystemDynamics.csv'
 
-   open(101,file=trim(plantcohorts), ACTION='write', IOSTAT=istat1)
-   open(102,file=trim(plantCNpools), ACTION='write', IOSTAT=istat2)
-   open(103,file=trim(soilCNpools),  ACTION='write', IOSTAT=istat3)
+   open(101,file=trim(plantCNpools), ACTION='write', IOSTAT=istat2)
+   open(102,file=trim(soilCNpools),  ACTION='write', IOSTAT=istat3)
+   open(103,file=trim(plantcohorts), ACTION='write', IOSTAT=istat1)
    open(104,file=trim(allpools),     ACTION='write', IOSTAT=istat3)
-   ! head
-   if(outputdaily)then
-     write(101,'(5(a5,","),25(a8,","))')               &
+   ! Daily output
+   write(101,'(5(a5,","),25(a8,","))')               &
         'year','doy','cID','PFT',                    &
         'layer','density', 'f_layer', 'LAI',         &
         'NSC','seedC','leafC','rootC','SW-C','HW-C', &
         'NSN','seedN','leafN','rootN','SW-N','HW-N'
 
-     write(102,'(2(a5,","),25(a8,","))')  'year','doy',         &
+   write(102,'(2(a5,","),25(a8,","))')  'year','doy',         &
         'GPP', 'NPP', 'Rh',   &
         'McrbC', 'fineL', 'struL', 'McrbN', 'fineN', 'struN', &
         'mineralN', 'N_uptk'
-   endif
    ! Yearly output
    write(103,'(3(a5,","),25(a9,","))')             &
         'cID','PFT','layer','density', 'f_layer',  &
@@ -143,16 +144,13 @@ program ForestESS
         'mineralN', 'N_fxed','N_uptk','N_yrMin','N_P2S','N_loss', &
         'reproC','reproN','NewC-C','NewC-N'
 
-   ! Parameter initialization: Initialize PFT parameters
-   call initialize_PFT_data(namelistfile)
-
    ! Initialize vegetation tile and plant cohorts
    allocate(vegn)
    call initialize_vegn_tile(vegn,nCohorts,namelistfile)
 
    ! Read in forcing data
-   call read_forcingdata(forcingData,datalines,days_data,yr_data,timestep)
-   !call read_NACPforcing(forcingData,datalines,days_data,yr_data,timestep)
+   !call read_forcingdata(forcingData,datalines,days_data,yr_data,timestep)
+   call read_NACPforcing(forcingData,datalines,days_data,yr_data,timestep)
    steps_per_day = int(24.0/timestep)
 
    ! total years of model run
